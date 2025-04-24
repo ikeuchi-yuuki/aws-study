@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AWS-Study Template
+
+Resources:
+  # VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.2.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: aws-study-vpc
+
+  # Subnet（2つともパブリックIPを自動付与可能にする）
+  SubnetAZ1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.2.0.0/24
+      VpcId: !Ref VPC
+      AvailabilityZone: ap-northeast-1a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: aws-study-subnetaz1a
+
+  SubnetAZ1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.2.1.0/24
+      VpcId: !Ref VPC
+      AvailabilityZone: ap-northeast-1c
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: aws-study-subnetaz1c
+
+
