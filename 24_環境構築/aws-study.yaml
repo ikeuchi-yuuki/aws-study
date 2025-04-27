@@ -41,5 +41,6 @@ Resources:
       Tags:
         - Key: Name
           Value: aws-study-subnetaz1c
+          
 
 
