@@ -1,6 +1,18 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: 「25_CloudFormation解説」の課題
 
+Parameters:
+  KeyName:
+    Description: 既存のEC2キーペア名を指定してください
+    Type: AWS::EC2::KeyPair::KeyName
+  EnvType:
+    Type: String
+    Default: CFn-test
+  Ec2ImageId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+    Description: Amazon Linux 2023の最新AMI
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -12,6 +24,19 @@ Resources:
         - Key: Name
           Value: !Sub "${EnvType}-VPC"
 
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-igw"
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -22,7 +47,7 @@ Resources:
         - Fn::GetAZs: !Ref AWS::Region
       Tags:
         - Key: Name
-          Value: !Sub "${EnvType}-public-subnet1"
+          Value: !Sub "${EnvType}-public-subnet-1a"
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -34,7 +59,7 @@ Resources:
         - Fn::GetAZs: !Ref AWS::Region
       Tags:
         - Key: Name
-          Value: !Sub "${EnvType}-public-subnet2"
+          Value: !Sub "${EnvType}-public-subnet-1c"
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
@@ -46,7 +71,7 @@ Resources:
         - Fn::GetAZs: !Ref AWS::Region
       Tags:
         - Key: Name
-          Value: !Sub "${EnvType}-private-subnet1"
+          Value: !Sub "${EnvType}-private-subnet-1a"
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -58,20 +83,7 @@ Resources:
         - Fn::GetAZs: !Ref AWS::Region
       Tags:
         - Key: Name
-          Value: !Sub "${EnvType}-private-subnet2"
-
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-    Properties:
-      Tags:
-        - Key: Name
-          Value: !Sub "${EnvType}-igw"
-
-  GatewayAttachment:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref VPC
-      InternetGatewayId: !Ref InternetGateway
+          Value: !Sub "${EnvType}-private-subnet-1c"
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -79,22 +91,14 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub "${EnvType}-public-rt"
+          Value: !Sub "${EnvType}-rtb-public"
 
-  DefaultPublicRoute:
+  PublicRoute:
     Type: AWS::EC2::Route
     Properties:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: "0.0.0.0/0"
       GatewayId: !Ref InternetGateway
-
-  PrivateRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: !Sub "${EnvType}-private-rt"
 
   PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -107,6 +111,34 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rtb-private-1a"
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rtb-private-1c"
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
 
   EC2Instance:
     Type: AWS::EC2::Instance
@@ -124,7 +156,7 @@ Resources:
         - DeviceName: /dev/xvda
           Ebs:
             VolumeSize: 8
-            VolumeType: gp2
+            VolumeType: gp3
       DisableApiTermination: true
       Tags:
         - Key: Name
@@ -140,31 +172,7 @@ Resources:
       - IpProtocol: tcp
         FromPort: 22
         ToPort: 22
-        CidrIp: 0.0.0.0/0
-      - IpProtocol: tcp
-        FromPort: 80
-        ToPort: 80
-        CidrIp: 0.0.0.0/0
-      - IpProtocol: tcp
-        FromPort: 443
-        ToPort: 443
-        CidrIp: 0.0.0.0/0
-      - IpProtocol: tcp
-        FromPort: 8080
-        ToPort: 8080
-        CidrIp: 0.0.0.0/0
+        CidrIp: 150.9.47.190/32
       Tags:
         - Key: Name
           Value: !Sub "${EnvType}-ec2-sg"
-
-Parameters:
-  KeyName:
-    Description: 既存のEC2キーペア名を指定してください
-    Type: AWS::EC2::KeyPair::KeyName
-  EnvType:
-    Type: String
-    Default: CFn-template
-  Ec2ImageId:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
-    Description: Amazon Linux 2の最新AMI
