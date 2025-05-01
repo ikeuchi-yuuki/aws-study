@@ -162,6 +162,7 @@ Resources:
         - Key: Name
           Value: !Sub "${EnvType}-ec2"
       
+
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -175,3 +176,4 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${EnvType}-ec2-sg"
+          
