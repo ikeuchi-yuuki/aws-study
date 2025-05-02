@@ -175,4 +175,3 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${EnvType}-ec2-sg"
-          
