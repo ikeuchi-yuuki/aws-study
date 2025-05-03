@@ -15,7 +15,10 @@ Parameters:
   DBUsername:
     Description: RDSマスターユーザー名
     Type: String
-    Default: root
+    NoEcho: true
+  MyIP:
+    Description: 許可するSSH接続元IPアドレス
+    Type: String
     NoEcho: true
 
 Resources:
@@ -28,19 +31,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${EnvType}-VPC"
-
-  VPCEndpointS3:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
-      VpcId: !Ref VPC
-      VpcEndpointType: Gateway
-      RouteTableIds:
-        - !Ref PrivateRouteTable1
-        - !Ref PrivateRouteTable2
-      Tags:
-        - Key: Name
-          Value: !Sub "${EnvType}-VPCe-s3"
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -229,7 +219,7 @@ Resources:
       HealthCheckTimeoutSeconds: 5
       HealthCheckIntervalSeconds: 30
       Matcher:
-        HttpCode: '200,300,301'
+        HttpCode: 200
       Targets:
         - Id: !Ref EC2Instance
           Port: 8080
@@ -253,7 +243,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 150.9.47.190/32
+          CidrIp: !Sub '${MyIP}/32'
         - IpProtocol: tcp
           FromPort: 8080
           ToPort: 8080
@@ -300,6 +290,36 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
 
+  RDSCloudWatchLogsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${EnvType}-rds-cloudwatchlogs-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: rds.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSCloudWatchLogsRole
+
+  RDSParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: !Sub "${EnvType}-rds-parameter-group"
+      Family: mysql8.0
+      Parameters:
+        general_log: "1"
+        slow_query_log: "1"
+        long_query_time: "2"
+        log_output: "FILE"
+        server_audit_logging: "1"
+        server_audit_events: "QUERY_DCL,QUERY_DDL"
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rds-parameter-group"
+
   RDSInstance:
     Type: AWS::RDS::DBInstance
     DeletionPolicy: Snapshot
@@ -321,12 +341,17 @@ Resources:
       DeletionProtection: true
       MonitoringInterval: 60
       MonitoringRoleArn: !GetAtt MonitoringRole.Arn
+      DBParameterGroupName: !Ref RDSParameterGroup
       EnableCloudwatchLogsExports:
         - audit
         - error
         - general
         - iam-db-auth-error
         - slowquery
+      EnableIAMDatabaseAuthentication: true
+      AssociatedRoles:
+        - FeatureName: "CLOUDWATCH_LOGS_EXPORT"
+          RoleArn: !GetAtt RDSCloudWatchLogsRole.Arn
       StorageEncrypted: true
       AutoMinorVersionUpgrade: true
       Tags:
