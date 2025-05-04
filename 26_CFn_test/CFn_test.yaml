@@ -346,9 +346,7 @@ Resources:
         - audit
         - error
         - general
-        - iam-db-auth-error
         - slowquery
-      EnableIAMDatabaseAuthentication: true
       AssociatedRoles:
         - FeatureName: "CLOUDWATCH_LOGS_EXPORT"
           RoleArn: !GetAtt RDSCloudWatchLogsRole.Arn
