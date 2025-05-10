@@ -1,0 +1,541 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: 「27,28,29_CloudFormationの推奨課題」
+
+Parameters:
+  KeyName:
+    Description: 既存のEC2キーペア名を指定してください
+    Type: AWS::EC2::KeyPair::KeyName
+  EnvType:
+    Type: String
+    Default: CFn-demo
+  Ec2ImageId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+    Description: Amazon Linux 2023の最新AMI
+  DBUsername:
+    Description: RDSマスターユーザー名
+    Type: String
+    NoEcho: true
+  MyIP:
+    Description: 許可するSSH接続元IPアドレス
+    Type: String
+    NoEcho: true
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-VPC"
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-igw"
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.1.0/24"
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref AWS::Region
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-public-subnet-1a"
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.2.0/24"
+      AvailabilityZone: !Select 
+        - 1
+        - Fn::GetAZs: !Ref AWS::Region
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-public-subnet-1c"
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.3.0/24"
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref AWS::Region
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-private-subnet-1a"
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.4.0/24"
+      AvailabilityZone: !Select 
+        - 1
+        - Fn::GetAZs: !Ref AWS::Region
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-private-subnet-1c"
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rtb-public"
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rtb-private-1a"
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rtb-private-1c"
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      ImageId: !Ref Ec2ImageId
+      InstanceType: t3.small
+      KeyName: !Ref KeyName
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          SubnetId: !Ref PublicSubnet1
+          GroupSet:
+            - !Ref EC2SecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 8
+            VolumeType: gp3
+      DisableApiTermination: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-ec2"
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash
+            sudo dnf -y install https://dev.mysql.com/get/mysql84-community-release-el9-1.noarch.rpm
+            sudo dnf -y install mysql mysql-community-client git
+            sudo dnf install -y java-21-amazon-corretto-devel jq nmap-ncat
+            sudo alternatives --set java /usr/lib/jvm/java-21-amazon-corretto/bin/java
+            sudo alternatives --set javac /usr/lib/jvm/java-21-amazon-corretto/bin/javac
+
+            sudo dnf install -y rsyslog
+            sudo systemctl enable --now rsyslog
+
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+
+            git clone https://github.com/koujienami/aws-study.git /home/ec2-user/aws-study
+            sudo chmod -R 755 /home/ec2-user/aws-study
+            sudo chown -R ec2-user:ec2-user /home/ec2-user/aws-study
+
+            ENV_TYPE="${EnvType}"
+            DB_USER="${DBUsername}"
+
+            mkdir -p /var/log/userdata
+
+            echo "$(date): RDSエンドポイント取得開始" > /var/log/userdata/rds-setup.log
+            for i in {1..15}; do
+              echo "$(date): 試行 $i - RDSエンドポイント取得" >> /var/log/userdata/rds-setup.log
+              RDS_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier "$ENV_TYPE-rds" --query 'DBInstances[0].Endpoint.Address' --output text)
+        
+              if [ -n "$RDS_ENDPOINT" ] && [ "$RDS_ENDPOINT" != "None" ]; then
+                echo "$(date): RDSエンドポイント取得成功: $RDS_ENDPOINT" >> /var/log/userdata/rds-setup.log
+                break
+              fi
+              echo "$(date): RDSエンドポイント取得失敗、30秒後に再試行" >> /var/log/userdata/rds-setup.log
+              sleep 30
+            done
+            echo "$(date): シークレット取得開始" >> /var/log/userdata/rds-setup.log
+            for i in {1..15}; do
+              echo "$(date): 試行 $i - シークレットARN取得" >> /var/log/userdata/rds-setup.log
+              SECRET_ARN=$(aws rds describe-db-instances --db-instance-identifier "$ENV_TYPE-rds" --query 'DBInstances[0].MasterUserSecret.SecretArn' --output text)
+        
+              if [ -n "$SECRET_ARN" ] && [ "$SECRET_ARN" != "None" ]; then
+                echo "$(date): シークレットARN取得成功: $SECRET_ARN" >> /var/log/userdata/rds-setup.log
+                DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id "$SECRET_ARN" --query 'SecretString' --output text | jq -r '.password')
+                echo "$(date): パスワード取得成功" >> /var/log/userdata/rds-setup.log
+                break
+              fi
+              echo "$(date): シークレットARN取得失敗、30秒後に再試行" >> /var/log/userdata/rds-setup.log
+              sleep 30
+            done
+
+            CONFIG_FILE="/home/ec2-user/aws-study/src/main/resources/application.properties"
+            echo "$(date): application.properties更新開始" >> /var/log/userdata/rds-setup.log
+      
+            cat > $CONFIG_FILE << EOF
+            spring.application.name=demo
+            spring.datasource.url=jdbc:mysql://$RDS_ENDPOINT:3306/awsstudy
+            spring.datasource.username=$DB_USER
+            spring.datasource.password=$DB_PASSWORD
+            spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+            mybatis.configuration.map-underscore-to-camel-case=true
+            mybatis.mapper-locations=classpath*:/mapper/*.xml
+            logging.level.root=DEBUG
+            spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+            EOF
+
+            cp $CONFIG_FILE /var/log/userdata/application.properties
+
+            echo "$(date): RDS接続待機開始" >> /var/log/userdata/rds-setup.log
+            for i in {1..20}; do
+              if nc -z $RDS_ENDPOINT 3306; then
+                echo "$(date): RDS接続成功" >> /var/log/userdata/rds-setup.log
+                break
+              fi
+              echo "$(date): RDS接続待機中..." >> /var/log/userdata/rds-setup.log
+              sleep 15
+            done
+
+            mysql -h $RDS_ENDPOINT -u $DB_USER -p$DB_PASSWORD awsstudy < /home/ec2-user/aws-study/src/main/resources/create.sql
+      
+            cd /home/ec2-user/aws-study
+            sudo chmod +x ./gradlew
+            ./gradlew clean build
+            JAR_PATH="/home/ec2-user/aws-study/build/libs"
+            WAR_FILE=$(ls -1 $JAR_PATH/*.war | grep -v plain | head -n 1)
+            sudo tee /etc/systemd/system/springboot.service << EOL
+            [Unit]
+            Description=Spring Boot Application
+            After=network.target
+
+            [Service]
+            User=ec2-user
+            WorkingDirectory=/home/ec2-user/aws-study
+            ExecStart=/usr/bin/java -jar $WAR_FILE
+            Restart=always
+            SuccessExitStatus=143
+
+            [Install]
+            WantedBy=multi-user.target
+            EOL
+            sudo systemctl daemon-reload
+            sudo systemctl enable springboot.service
+            sudo systemctl start springboot.service
+            else
+            echo "Gradle build failed" >> /var/log/userdata/error.log
+            fi
+
+            sudo yum install -y amazon-cloudwatch-agent
+      
+            cat > /opt/aws/amazon-cloudwatch-agent/bin/config.json << EOL
+            {
+              "agent": { "run_as_user": "ec2-user" },
+              "logs": {
+                "logs_collected": {
+                  "files": {
+                    "collect_list": [
+                      {
+                        "file_path": "/var/log/messages",
+                        "log_group_name": "${EnvType}-messages",
+                        "log_stream_name": "{instance_id}"
+                      },
+                      {
+                        "file_path": "/home/ec2-user/spring-boot.log",
+                        "log_group_name": "${EnvType}-spring-boot",
+                        "log_stream_name": "{instance_id}"
+                      },
+                      {
+                        "file_path": "/var/log/userdata/rds-setup.log",
+                        "log_group_name": "${EnvType}-userdata",
+                        "log_stream_name": "{instance_id}"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+            EOL
+      
+            sudo chmod 644 /var/log/messages
+            sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+
+
+  # IAMロール追加
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2Role
+
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !GetAtt RDSInstance.MasterUserSecret.SecretArn
+        - PolicyName: RDSDescribeAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - rds:DescribeDBInstances
+                Resource: "*"
+        - PolicyName: CloudWatchLogsAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource: "arn:aws:logs:*:*:*"
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ALB Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-alb-sg"
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${EnvType}-alb"
+      Scheme: internet-facing
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !GetAtt ALBSecurityGroup.GroupId
+      Type: application
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-alb"
+
+  EC2TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub "${EnvType}-tg"
+      Port: 8080
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: /health
+      HealthCheckPort: 'traffic-port'
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+      HealthCheckTimeoutSeconds: 5
+      HealthCheckIntervalSeconds: 30
+      Matcher:
+        HttpCode: 200
+      Targets:
+        - Id: !Ref EC2Instance
+          Port: 8080
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref EC2TargetGroup
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EC2 Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Sub '${MyIP}/32'
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          SourceSecurityGroupId: !GetAtt ALBSecurityGroup.GroupId
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-ec2-sg"
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-db-subnet-group"
+
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: RDS Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !GetAtt EC2SecurityGroup.GroupId
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rds-sg"
+
+  MonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: monitoring.rds.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+
+  RDSCloudWatchLogsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${EnvType}-rds-cloudwatchlogs-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: rds.amazonaws.com
+            Action: sts:AssumeRole
+
+  RDSParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: !Sub "${EnvType}-rds-parameter-group"
+      Family: mysql8.0
+      Parameters:
+        general_log: "1"
+        slow_query_log: "1"
+        long_query_time: "2"
+        log_output: "FILE"
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rds-parameter-group"
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub "${EnvType}-rds" 
+      Engine: mysql
+      EngineVersion: 8.0.39
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: 20
+      StorageType: gp2
+      PubliclyAccessible: false
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !GetAtt RDSSecurityGroup.GroupId
+      MasterUsername: !Ref DBUsername
+      ManageMasterUserPassword: true
+      BackupRetentionPeriod: 1
+      DBName: awsstudy
+      DeletionProtection: true
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt MonitoringRole.Arn
+      DBParameterGroupName: !Ref RDSParameterGroup
+      EnableCloudwatchLogsExports:
+        - audit
+        - error
+        - general
+        - slowquery
+      StorageEncrypted: true
+      AutoMinorVersionUpgrade: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rds"
