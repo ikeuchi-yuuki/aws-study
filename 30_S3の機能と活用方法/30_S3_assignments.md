@@ -8,7 +8,6 @@
 
 - **課題**：S3バケットの作成と動作確認。
 
-
 ---
 
 ## 提出ファイル
@@ -47,7 +46,7 @@ aws configure
 ### 4. EC2にS3よりファイルダウンロード
 
 ```
-aws s3 cp s3://s3-cli-study/text. yaml
+aws s3 cp s3://s3-cli-study/text.yaml
 ```
 
 ### 5. EC2からS3にファイルをアップロード
@@ -59,10 +58,11 @@ aws s3 cp ./text.yaml s3://s3-cli-study/
 ### 6. CLIでS3のバケットのテキストファイルを削除
 
 ```
-aws s3 rm s3://s3-cli-study/text. yaml
+aws s3 rm s3://s3-cli-study/text.yaml
 ```
 
-### 下記はS3操作を行った際の実際のターミナル画面です
+### エビデンス
+ターミナルの操作履歴は以下を参照
 
 ![S3操作の様子画像](cli_check.jpg)
 
