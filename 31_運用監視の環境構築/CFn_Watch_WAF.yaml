@@ -488,8 +488,6 @@ Resources:
   # WAFログ保存用CloudWatch Logsグループの作成
   WAFLogGroup:
     Type: AWS::Logs::LogGroup
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Retain
     Properties:
       LogGroupName: "aws-waf-logs-Watch"
       RetentionInDays: 30
