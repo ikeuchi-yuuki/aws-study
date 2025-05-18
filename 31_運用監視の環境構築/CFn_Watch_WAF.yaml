@@ -438,9 +438,6 @@ Resources:
   # WAFログ設定
   WAFLogging:
     Type: AWS::WAFv2::LoggingConfiguration
-    DependsOn: 
-      - WebACL
-      - WAFLogGroup
     Properties:
       ResourceArn: !GetAtt WebACL.Arn
       LogDestinationConfigs:
@@ -460,7 +457,7 @@ Resources:
       Scope: REGIONAL
       IPAddressVersion: IPV4
       Addresses: 
-        - "150.9.190.229/32"  # 実際の許可IPに置き換え
+        - !Sub '${MyIP}/32'
 
   # WAF WebACLの作成
   WebACL:
@@ -494,7 +491,7 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Retain
     Properties:
-      LogGroupName: "aws-waf-logs-Watch-WAF"
+      LogGroupName: "aws-waf-logs-Watch"
       RetentionInDays: 30
       Tags:
         - Key: Name
@@ -503,11 +500,8 @@ Resources:
   # ALBへWAFを関連付け
   WebACLAssociation:
     Type: AWS::WAFv2::WebACLAssociation
-    DependsOn: 
-      - ALB
-      - WebACL
     Properties:
-      ResourceArn: !GetAtt ALB.LoadBalancerArn
+      ResourceArn: !Ref ALB
       WebACLArn: !GetAtt WebACL.Arn
 
   # CloudWatchアラームの設定
@@ -515,7 +509,7 @@ Resources:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmName: "Watch-WAF-blocked-requests-alarm"
-      AlarmDescription: "許可されていないIPからのアクセスを検知"
+      AlarmDescription: "許可しているIP以外からのアクセスを検知"
       Namespace: "AWS/WAFV2"
       InsufficientDataActions: []
       Dimensions:
