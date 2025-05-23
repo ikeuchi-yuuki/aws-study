@@ -1,0 +1,570 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: 「31_CloudFormationを使った運用監視の環境構築」の課題
+
+# パラメータ定義
+Parameters:
+  KeyName:
+    Description: 既存のEC2キーペア名を指定してください
+    Type: AWS::EC2::KeyPair::KeyName
+  EnvType:
+    Type: String
+    Default: Watch-WAF
+  Ec2ImageId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+    Description: Amazon Linux 2023の最新AMI
+  DBUsername:
+    Description: RDSマスターユーザー名
+    Type: String
+    NoEcho: true
+  MyIP:
+    Description: 許可するSSH接続元IPアドレス
+    Type: String
+    NoEcho: true
+  NotificationEmail:
+    Type: String
+    Description: アラート通知を受信するメールアドレス
+    NoEcho: true
+
+Resources:
+  # VPC関連リソース
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-VPC"
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-igw"
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # サブネット関連（パブリック２、プライベート２）
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.1.0/24"
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref AWS::Region
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-public-subnet-1a"
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.2.0/24"
+      AvailabilityZone: !Select 
+        - 1
+        - Fn::GetAZs: !Ref AWS::Region
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-public-subnet-1c"
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.3.0/24"
+      AvailabilityZone: !Select 
+        - 0
+        - Fn::GetAZs: !Ref AWS::Region
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-private-subnet-1a"
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.4.0/24"
+      AvailabilityZone: !Select 
+        - 1
+        - Fn::GetAZs: !Ref AWS::Region
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-private-subnet-1c"
+
+  # ルートテーブルと関連付け
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rtb-public"
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rtb-private-1a"
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rtb-private-1c"
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
+
+  # コアリソース
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      ImageId: !Ref Ec2ImageId
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          SubnetId: !Ref PublicSubnet1
+          GroupSet:
+            - !Ref EC2SecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 8
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-ec2"
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${EnvType}-alb"
+      Scheme: internet-facing
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !GetAtt ALBSecurityGroup.GroupId
+      Type: application
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-alb"
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      Engine: mysql
+      EngineVersion: 8.0.39
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: 20
+      StorageType: gp2
+      PubliclyAccessible: false
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !GetAtt RDSSecurityGroup.GroupId
+      MasterUsername: !Ref DBUsername
+      ManageMasterUserPassword: true
+      BackupRetentionPeriod: 1
+      DBName: awsstudy
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt MonitoringRole.Arn
+      DBParameterGroupName: !Ref RDSParameterGroup
+      EnableCloudwatchLogsExports:
+        - audit
+        - error
+        - general
+        - slowquery
+      StorageEncrypted: true
+      AutoMinorVersionUpgrade: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rds"
+
+  # セキュリティーグループ関連
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EC2 Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Sub '${MyIP}/32'
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          SourceSecurityGroupId: !GetAtt ALBSecurityGroup.GroupId
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-ec2-sg"
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ALB Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Sub '${MyIP}/32'
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Sub '${MyIP}/32'
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-alb-sg"
+
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: RDS Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !GetAtt EC2SecurityGroup.GroupId
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rds-sg"
+
+  # EC2インスタンスプロファイルの作成
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2Role
+
+  # EC2用IAMロールの作成
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        # CloudWatch Logsアクセス用ポリシー
+        - PolicyName: CloudWatchLogsAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:FilterLogEvents
+                  - logs:GetLogEvents
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                Resource: "arn:aws:logs:*:*:*"
+        # CloudWatchメトリクスアクセス用ポリシー
+        - PolicyName: CloudWatchMetricsAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:ListMetrics
+                  - cloudwatch:GetMetricData
+                  - cloudwatch:GetMetricStatistics
+                Resource: "*"
+        # CloudFormation操作権限
+        - PolicyName: CloudFormationReadAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:ListStackResources
+                Resource: 
+                  - !Sub "arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:..."
+        # WAF操作権限
+        - PolicyName: WAFv2AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - wafv2:ListWebACLs
+                  - wafv2:GetWebACL
+                Resource: "*"
+
+  # 補助リソース
+  EC2TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub "${EnvType}-tg"
+      Port: 8080
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: instance
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: /health
+      HealthCheckPort: 'traffic-port'
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+      HealthCheckTimeoutSeconds: 5
+      HealthCheckIntervalSeconds: 30
+      Matcher:
+        HttpCode: 200
+      Targets:
+        - Id: !Ref EC2Instance
+          Port: 8080
+
+  # ALBリスナーの作成
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref EC2TargetGroup
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+
+  # RDS用サブネットグループの作成
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-db-subnet-group"
+
+  # RDS監視用IAMロールの作成
+  MonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: monitoring.rds.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+
+  # RDS CloudWatch Logs連携用IAMロールの作成
+  RDSCloudWatchLogsRole:
+    Type: AWS::IAM::Role
+    DeletionPolicy: Delete
+    Properties:
+      RoleName: !Sub "${EnvType}-rds-cloudwatchlogs-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: rds.amazonaws.com
+            Action: sts:AssumeRole
+
+  # RDSパラメータグループの作成
+  RDSParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: !Sub "${EnvType}-rds-parameter-group"
+      Family: mysql8.0
+      Parameters:
+        general_log: "1"
+        slow_query_log: "1"
+        long_query_time: "2"
+        log_output: "FILE"
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-rds-parameter-group"
+
+  # SNSトピックの作成
+  AlarmNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: "Watch-WAF-Topic"
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref NotificationEmail
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-alarm-topic"
+
+  # SNSトピックポリシーの作成
+  SNSTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref AlarmNotificationTopic
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowCloudWatchAlarms
+            Effect: Allow
+            Principal:
+              Service: cloudwatch.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref AlarmNotificationTopic
+
+  # WAFログ設定
+  WAFLogging:
+    Type: AWS::WAFv2::LoggingConfiguration
+    DependsOn: 
+      - WebACL
+      - WAFLogGroup
+    Properties:
+      ResourceArn: !GetAtt WebACL.Arn
+      LogDestinationConfigs:
+        - !GetAtt WAFLogGroup.Arn
+      RedactedFields:
+        - Method: {}
+        - QueryString: {}
+        - SingleHeader:
+            Name: Authorization
+      LoggingFilter:
+        DefaultBehavior: KEEP
+        Filters:
+          - Behavior: KEEP
+            Requirement: MEETS_ALL
+            Conditions:
+              - ActionCondition:
+                  Action: ALLOW
+
+  # IP許可用IPセット
+  AllowIPSet:
+    Type: AWS::WAFv2::IPSet
+    Properties:
+      Name: "Allow-IP-Set"
+      Description: Allowed IP address ranges
+      Scope: REGIONAL
+      IPAddressVersion: IPV4
+      Addresses: 
+        - "150.9.190.229/32"  # 実際の許可IPに置き換え
+
+  # WAF WebACLの作成
+  WebACL:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: Watch-WAF
+      Scope: REGIONAL
+      Description: WAF for Watch-WAF-alb
+      DefaultAction:
+        Block: {}
+      VisibilityConfig:
+        CloudWatchMetricsEnabled: true
+        MetricName: Watch-WAF
+        SampledRequestsEnabled: true
+      Rules:
+        - Name: AllowSpecificIP
+          Priority: 0
+          Action:
+            Allow: {}
+          Statement:
+            IPSetReferenceStatement:
+              Arn: !GetAtt AllowIPSet.Arn
+          VisibilityConfig:
+            CloudWatchMetricsEnabled: true
+            MetricName: AllowedByIP
+            SampledRequestsEnabled: true
+
+  # WAFログ保存用CloudWatch Logsグループの作成
+  WAFLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: "aws-waf-logs-Watch-WAF"
+      RetentionInDays: 30
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvType}-waf-log-group"
+
+  # ALBへWAFを関連付け
+  WebACLAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    DependsOn: 
+      - ALB
+      - WebACL
+    Properties:
+      ResourceArn: !GetAtt ALB.LoadBalancerArn
+      WebACLArn: !GetAtt WebACL.Arn
+
+  # CloudWatchアラームの設定
+  WAFBlockedRequestsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: "Watch-WAF-blocked-requests-alarm"
+      AlarmDescription: "許可されていないIPからのアクセスを検知"
+      Namespace: "AWS/WAFV2"
+      InsufficientDataActions: []
+      Dimensions:
+        - Name: "WebACL"
+          Value: "Watch-WAF"
+        - Name: "Region"
+          Value: !Ref "AWS::Region" 
+        - Name: "Rule"
+          Value: "Watch-WAF"
+      MetricName: "BlockedRequests"
+      Statistic: "Sum"
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: "GreaterThanOrEqualToThreshold"
+      TreatMissingData: "notBreaching"
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmNotificationTopic
