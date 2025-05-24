@@ -5,3 +5,5 @@
 *.tfstate.*
 .env
 credentials.tf
+.tfvars
+terraform.tfvars
