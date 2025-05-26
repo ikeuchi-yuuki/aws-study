@@ -48,6 +48,19 @@
 
 ---
 
+## モジュール説明
+
+下記のように各モジュールを作成し、environments/devディレクトリ内で呼び出して構成しています。
+
+| モジュール名 |output        | 説明 |　 input |　説明  |
+|------------|--------------|-----|------|-----|
+|vpc        |vpc_id  igw_id | VPCとインターネットGWの作成|my_cidr_block| VPCのCIDRブロック |
+| subnet    | subnet_1a_id  | サブネットとルートテーブル|vpc_id igw_id  | VPCのID、IGWのID |
+| ec2       | ec2_id        | EC2インスタンス作成 |ec2_sg_id  | セキュリティグループID |
+| security  |ec2_sg_id      | EC2用セキュリティグループ|vpc_id  |  VPCのID |
+
+---
+
 ## tfvarsファイル
 
 ![変数ファイル](environments/dev/画像/変数定義ファイル.jpg)

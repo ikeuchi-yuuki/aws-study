@@ -35,7 +35,7 @@ resource "aws_subnet" "private_1c" {
   }
 }
 
-# ルートテーブルと関連付け
+# ルートテーブルとサブネットの関連付け
 resource "aws_route_table" "public" {
   vpc_id = var.vpc_id
   tags = {
@@ -70,6 +70,7 @@ resource "aws_route_table_association" "private_1c" {
   route_table_id = aws_route_table.private.id
 }
 
+# ルートテーブルとigwの関連付け
 resource "aws_route" "public_internet_access" {
   route_table_id         = aws_route_table.public.id
   destination_cidr_block = "0.0.0.0/0"

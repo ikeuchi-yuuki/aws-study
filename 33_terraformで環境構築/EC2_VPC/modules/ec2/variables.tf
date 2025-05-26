@@ -9,7 +9,7 @@ variable "vpc_id" {
 }
 
 variable "public_subnet_1a_id" {
-  description = "EC2を配置するパブリックサブネット1aのID"
+  description = "パブリックサブネット1aのID"
   type        = string
 }
 
@@ -20,5 +20,10 @@ variable "my_ip" {
 
 variable "my_env" {
   description = "環境名（例: dev, stg, prod）"
+  type        = string
+}
+
+variable "ec2_sg_id" {
+  description = "EC2用セキュリティグループのID"
   type        = string
 }

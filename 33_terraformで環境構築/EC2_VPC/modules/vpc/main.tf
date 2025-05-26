@@ -1,3 +1,4 @@
+# VPC関連（vpc、ige）
 resource "aws_vpc" "main_vpc" {
   cidr_block           = var.my_cidr_block
   enable_dns_support   = true
