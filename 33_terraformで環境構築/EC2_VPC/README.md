@@ -13,6 +13,7 @@
 
 ## 提出内容
 - 下記ディレクトリ構成のtfファイル一式
+- モジュール説明
 - **tfvarsファイルはセキュリティ上git管理せず、内容をスクリーンショット（jpg）で提出しています**
 - 構築エビデンス（apply画面、AWSコンソール画面等のスクリーンショット）
 
@@ -40,6 +41,10 @@
     │   ├── variables.tf
     │   └── outputs.tf
     ├── ec2/
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf
+    ├── security/
     │   ├── main.tf
     │   ├── variables.tf
     │   └── outputs.tf
