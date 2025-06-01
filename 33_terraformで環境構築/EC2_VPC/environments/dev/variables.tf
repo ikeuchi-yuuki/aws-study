@@ -17,3 +17,13 @@ variable "my_ip" {
   description = "自分のグローバルIPアドレス"
   type        = string
 }
+
+variable "db_username" {
+  description = "DB用ユーザーネーム"
+  type        = string
+}
+
+variable "notification_email" {
+  description = "通知用のメールアドレス"
+  type        = string
+}
