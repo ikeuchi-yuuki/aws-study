@@ -1,0 +1,1170 @@
+module.rds.data.aws_iam_policy_document.rds_monitoring: Reading...
+module.ec2.data.aws_ssm_parameter.al2023_latest: Reading...
+module.rds.data.aws_iam_policy_document.rds_monitoring: Read complete after 0s [id=76086537]
+module.ec2.data.aws_ssm_parameter.al2023_latest: Read complete after 0s [id=/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # module.alb.aws_lb.alb will be created
+  + resource "aws_lb" "alb" {
+      + arn                                                          = (known after apply)
+      + arn_suffix                                                   = (known after apply)
+      + client_keep_alive                                            = 3600
+      + desync_mitigation_mode                                       = "defensive"
+      + dns_name                                                     = (known after apply)
+      + drop_invalid_header_fields                                   = false
+      + enable_deletion_protection                                   = false
+      + enable_http2                                                 = true
+      + enable_tls_version_and_cipher_suite_headers                  = false
+      + enable_waf_fail_open                                         = false
+      + enable_xff_client_port                                       = false
+      + enable_zonal_shift                                           = false
+      + enforce_security_group_inbound_rules_on_private_link_traffic = (known after apply)
+      + id                                                           = (known after apply)
+      + idle_timeout                                                 = 60
+      + internal                                                     = false
+      + ip_address_type                                              = (known after apply)
+      + load_balancer_type                                           = "application"
+      + name                                                         = "dev-alb"
+      + name_prefix                                                  = (known after apply)
+      + preserve_host_header                                         = false
+      + security_groups                                              = (known after apply)
+      + subnets                                                      = (known after apply)
+      + tags                                                         = {
+          + "Name" = "dev-alb"
+        }
+      + tags_all                                                     = {
+          + "Name" = "dev-alb"
+        }
+      + vpc_id                                                       = (known after apply)
+      + xff_header_processing_mode                                   = "append"
+      + zone_id                                                      = (known after apply)
+
+      + subnet_mapping (known after apply)
+    }
+
+  # module.alb.aws_lb_listener.alb_listener will be created
+  + resource "aws_lb_listener" "alb_listener" {
+      + arn                                                                   = (known after apply)
+      + id                                                                    = (known after apply)
+      + load_balancer_arn                                                     = (known after apply)
+      + port                                                                  = 80
+      + protocol                                                              = "HTTP"
+      + routing_http_request_x_amzn_mtls_clientcert_header_name               = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_issuer_header_name        = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_leaf_header_name          = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_serial_number_header_name = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_subject_header_name       = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_validity_header_name      = (known after apply)
+      + routing_http_request_x_amzn_tls_cipher_suite_header_name              = (known after apply)
+      + routing_http_request_x_amzn_tls_version_header_name                   = (known after apply)
+      + routing_http_response_access_control_allow_credentials_header_value   = (known after apply)
+      + routing_http_response_access_control_allow_headers_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_methods_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_origin_header_value        = (known after apply)
+      + routing_http_response_access_control_expose_headers_header_value      = (known after apply)
+      + routing_http_response_access_control_max_age_header_value             = (known after apply)
+      + routing_http_response_content_security_policy_header_value            = (known after apply)
+      + routing_http_response_server_enabled                                  = (known after apply)
+      + routing_http_response_strict_transport_security_header_value          = (known after apply)
+      + routing_http_response_x_content_type_options_header_value             = (known after apply)
+      + routing_http_response_x_frame_options_header_value                    = (known after apply)
+      + ssl_policy                                                            = (known after apply)
+      + tags_all                                                              = (known after apply)
+      + tcp_idle_timeout_seconds                                              = (known after apply)
+
+      + default_action {
+          + order            = (known after apply)
+          + target_group_arn = (known after apply)
+          + type             = "forward"
+        }
+
+      + mutual_authentication (known after apply)
+    }
+
+  # module.alb.aws_lb_target_group.alb_tg will be created
+  + resource "aws_lb_target_group" "alb_tg" {
+      + arn                                = (known after apply)
+      + arn_suffix                         = (known after apply)
+      + connection_termination             = (known after apply)
+      + deregistration_delay               = "300"
+      + id                                 = (known after apply)
+      + ip_address_type                    = (known after apply)
+      + lambda_multi_value_headers_enabled = false
+      + load_balancer_arns                 = (known after apply)
+      + load_balancing_algorithm_type      = (known after apply)
+      + load_balancing_anomaly_mitigation  = (known after apply)
+      + load_balancing_cross_zone_enabled  = (known after apply)
+      + name                               = "dev-tg"
+      + name_prefix                        = (known after apply)
+      + port                               = 8080
+      + preserve_client_ip                 = (known after apply)
+      + protocol                           = "HTTP"
+      + protocol_version                   = (known after apply)
+      + proxy_protocol_v2                  = false
+      + slow_start                         = 0
+      + tags                               = {
+          + "Name" = "dev-tg"
+        }
+      + tags_all                           = {
+          + "Name" = "dev-tg"
+        }
+      + target_type                        = "instance"
+      + vpc_id                             = (known after apply)
+
+      + health_check {
+          + enabled             = true
+          + healthy_threshold   = 5
+          + interval            = 30
+          + matcher             = "200"
+          + path                = "/"
+          + port                = "traffic-port"
+          + protocol            = "HTTP"
+          + timeout             = 5
+          + unhealthy_threshold = 2
+        }
+
+      + stickiness (known after apply)
+
+      + target_failover (known after apply)
+
+      + target_group_health (known after apply)
+
+      + target_health_state (known after apply)
+    }
+
+  # module.alb.aws_lb_target_group_attachment.ec2_attach will be created
+  + resource "aws_lb_target_group_attachment" "ec2_attach" {
+      + id               = (known after apply)
+      + port             = 8080
+      + target_group_arn = (known after apply)
+      + target_id        = (known after apply)
+    }
+
+  # module.ec2.aws_instance.ec2 will be created
+  + resource "aws_instance" "ec2" {
+      + ami                                  = (sensitive value)
+      + arn                                  = (known after apply)
+      + associate_public_ip_address          = true
+      + availability_zone                    = (known after apply)
+      + cpu_core_count                       = (known after apply)
+      + cpu_threads_per_core                 = (known after apply)
+      + disable_api_stop                     = (known after apply)
+      + disable_api_termination              = (known after apply)
+      + ebs_optimized                        = (known after apply)
+      + enable_primary_ipv6                  = (known after apply)
+      + get_password_data                    = false
+      + host_id                              = (known after apply)
+      + host_resource_group_arn              = (known after apply)
+      + iam_instance_profile                 = (known after apply)
+      + id                                   = (known after apply)
+      + instance_initiated_shutdown_behavior = (known after apply)
+      + instance_lifecycle                   = (known after apply)
+      + instance_state                       = (known after apply)
+      + instance_type                        = "t2.micro"
+      + ipv6_address_count                   = (known after apply)
+      + ipv6_addresses                       = (known after apply)
+      + key_name                             = "aws-study-ikeuchi-tokyo"
+      + monitoring                           = (known after apply)
+      + outpost_arn                          = (known after apply)
+      + password_data                        = (known after apply)
+      + placement_group                      = (known after apply)
+      + placement_partition_number           = (known after apply)
+      + primary_network_interface_id         = (known after apply)
+      + private_dns                          = (known after apply)
+      + private_ip                           = (known after apply)
+      + public_dns                           = (known after apply)
+      + public_ip                            = (known after apply)
+      + secondary_private_ips                = (known after apply)
+      + security_groups                      = (known after apply)
+      + source_dest_check                    = true
+      + spot_instance_request_id             = (known after apply)
+      + subnet_id                            = (known after apply)
+      + tags                                 = {
+          + "Name" = "dev-ec2"
+        }
+      + tags_all                             = {
+          + "Name" = "dev-ec2"
+        }
+      + tenancy                              = (known after apply)
+      + user_data                            = (known after apply)
+      + user_data_base64                     = (known after apply)
+      + user_data_replace_on_change          = false
+      + vpc_security_group_ids               = (known after apply)
+
+      + capacity_reservation_specification (known after apply)
+
+      + cpu_options (known after apply)
+
+      + ebs_block_device (known after apply)
+
+      + enclave_options (known after apply)
+
+      + ephemeral_block_device (known after apply)
+
+      + instance_market_options (known after apply)
+
+      + maintenance_options (known after apply)
+
+      + metadata_options (known after apply)
+
+      + network_interface (known after apply)
+
+      + private_dns_name_options (known after apply)
+
+      + root_block_device {
+          + delete_on_termination = true
+          + device_name           = (known after apply)
+          + encrypted             = (known after apply)
+          + iops                  = (known after apply)
+          + kms_key_id            = (known after apply)
+          + tags_all              = (known after apply)
+          + throughput            = (known after apply)
+          + volume_id             = (known after apply)
+          + volume_size           = 8
+          + volume_type           = "gp3"
+        }
+    }
+
+  # module.main_vpc.aws_internet_gateway.igw will be created
+  + resource "aws_internet_gateway" "igw" {
+      + arn      = (known after apply)
+      + id       = (known after apply)
+      + owner_id = (known after apply)
+      + tags     = {
+          + "Name" = "dev-igw"
+        }
+      + tags_all = {
+          + "Name" = "dev-igw"
+        }
+      + vpc_id   = (known after apply)
+    }
+
+  # module.main_vpc.aws_vpc.main_vpc will be created
+  + resource "aws_vpc" "main_vpc" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.0.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = true
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = {
+          + "Name" = "dev-vpc"
+        }
+      + tags_all                             = {
+          + "Name" = "dev-vpc"
+        }
+    }
+
+  # module.rds.aws_db_instance.rds will be created
+  + resource "aws_db_instance" "rds" {
+      + address                               = (known after apply)
+      + allocated_storage                     = 20
+      + apply_immediately                     = false
+      + arn                                   = (known after apply)
+      + auto_minor_version_upgrade            = true
+      + availability_zone                     = (known after apply)
+      + backup_retention_period               = 1
+      + backup_target                         = (known after apply)
+      + backup_window                         = (known after apply)
+      + ca_cert_identifier                    = (known after apply)
+      + character_set_name                    = (known after apply)
+      + copy_tags_to_snapshot                 = false
+      + database_insights_mode                = (known after apply)
+      + db_name                               = "awsstudy"
+      + db_subnet_group_name                  = "dev-db-subnet-group"
+      + dedicated_log_volume                  = false
+      + delete_automated_backups              = true
+      + domain_fqdn                           = (known after apply)
+      + enabled_cloudwatch_logs_exports       = [
+          + "audit",
+          + "error",
+          + "general",
+          + "slowquery",
+        ]
+      + endpoint                              = (known after apply)
+      + engine                                = "mysql"
+      + engine_lifecycle_support              = (known after apply)
+      + engine_version                        = "8.0.39"
+      + engine_version_actual                 = (known after apply)
+      + hosted_zone_id                        = (known after apply)
+      + id                                    = (known after apply)
+      + identifier                            = "dev-rds"
+      + identifier_prefix                     = (known after apply)
+      + instance_class                        = "db.t4g.micro"
+      + iops                                  = (known after apply)
+      + kms_key_id                            = (known after apply)
+      + latest_restorable_time                = (known after apply)
+      + license_model                         = (known after apply)
+      + listener_endpoint                     = (known after apply)
+      + maintenance_window                    = (known after apply)
+      + manage_master_user_password           = true
+      + master_user_secret                    = (known after apply)
+      + master_user_secret_kms_key_id         = (known after apply)
+      + monitoring_interval                   = 60
+      + monitoring_role_arn                   = (known after apply)
+      + multi_az                              = (known after apply)
+      + nchar_character_set_name              = (known after apply)
+      + network_type                          = (known after apply)
+      + option_group_name                     = (known after apply)
+      + parameter_group_name                  = "dev-rds-parameter-group"
+      + password_wo                           = (write-only attribute)
+      + performance_insights_enabled          = false
+      + performance_insights_kms_key_id       = (known after apply)
+      + performance_insights_retention_period = (known after apply)
+      + port                                  = (known after apply)
+      + publicly_accessible                   = false
+      + replica_mode                          = (known after apply)
+      + replicas                              = (known after apply)
+      + resource_id                           = (known after apply)
+      + skip_final_snapshot                   = true
+      + snapshot_identifier                   = (known after apply)
+      + status                                = (known after apply)
+      + storage_encrypted                     = true
+      + storage_throughput                    = (known after apply)
+      + storage_type                          = "gp2"
+      + tags                                  = {
+          + "Name" = "dev-rds"
+        }
+      + tags_all                              = {
+          + "Name" = "dev-rds"
+        }
+      + timezone                              = (known after apply)
+      + username                              = "root"
+      + vpc_security_group_ids                = (known after apply)
+    }
+
+  # module.rds.aws_db_parameter_group.rds_parameter will be created
+  + resource "aws_db_parameter_group" "rds_parameter" {
+      + arn          = (known after apply)
+      + description  = "dev-rds-parameter-group"
+      + family       = "mysql8.0"
+      + id           = (known after apply)
+      + name         = "dev-rds-parameter-group"
+      + name_prefix  = (known after apply)
+      + skip_destroy = false
+      + tags         = {
+          + "Name" = "dev-rds-parameter-group"
+        }
+      + tags_all     = {
+          + "Name" = "dev-rds-parameter-group"
+        }
+
+      + parameter {
+          + apply_method = "immediate"
+          + name         = "general_log"
+          + value        = "1"
+        }
+      + parameter {
+          + apply_method = "immediate"
+          + name         = "log_output"
+          + value        = "FILE"
+        }
+      + parameter {
+          + apply_method = "immediate"
+          + name         = "long_query_time"
+          + value        = "2"
+        }
+      + parameter {
+          + apply_method = "immediate"
+          + name         = "slow_query_log"
+          + value        = "1"
+        }
+    }
+
+  # module.rds.aws_db_subnet_group.rds_db will be created
+  + resource "aws_db_subnet_group" "rds_db" {
+      + arn                     = (known after apply)
+      + description             = "Managed by Terraform"
+      + id                      = (known after apply)
+      + name                    = "dev-db-subnet-group"
+      + name_prefix             = (known after apply)
+      + subnet_ids              = (known after apply)
+      + supported_network_types = (known after apply)
+      + tags                    = {
+          + "Name" = "dev-db-subnet-group"
+        }
+      + tags_all                = {
+          + "Name" = "dev-db-subnet-group"
+        }
+      + vpc_id                  = (known after apply)
+    }
+
+  # module.rds.aws_iam_role.rds_monitoring will be created
+  + resource "aws_iam_role" "rds_monitoring" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "monitoring.rds.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "dev-rds-monitoring-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags_all              = (known after apply)
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.rds.aws_iam_role_policy_attachment.rds_monitoring will be created
+  + resource "aws_iam_role_policy_attachment" "rds_monitoring" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+      + role       = "dev-rds-monitoring-role"
+    }
+
+  # module.security.aws_security_group.alb_sg will be created
+  + resource "aws_security_group" "alb_sg" {
+      + arn                    = (known after apply)
+      + description            = "ALB Security Group"
+      + egress                 = (known after apply)
+      + id                     = (known after apply)
+      + ingress                = (known after apply)
+      + name                   = "dev-alb-sg"
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Name" = "dev-alb-sg"
+        }
+      + tags_all               = {
+          + "Name" = "dev-alb-sg"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # module.security.aws_security_group.ec2_sg will be created
+  + resource "aws_security_group" "ec2_sg" {
+      + arn                    = (known after apply)
+      + description            = "EC2 security group"
+      + egress                 = (known after apply)
+      + id                     = (known after apply)
+      + ingress                = (known after apply)
+      + name                   = "dev-ec2-sg"
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Name" = "dev-ec2-sg"
+        }
+      + tags_all               = {
+          + "Name" = "dev-ec2-sg"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # module.security.aws_security_group.rds_sg will be created
+  + resource "aws_security_group" "rds_sg" {
+      + arn                    = (known after apply)
+      + description            = "RDS Security Group"
+      + egress                 = (known after apply)
+      + id                     = (known after apply)
+      + ingress                = (known after apply)
+      + name                   = "dev-rds-sg"
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Name" = "dev-rds-sg"
+        }
+      + tags_all               = {
+          + "Name" = "dev-rds-sg"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # module.security.aws_security_group_rule.alb_egress will be created
+  + resource "aws_security_group_rule" "alb_egress" {
+      + cidr_blocks              = [
+          + "0.0.0.0/0",
+        ]
+      + from_port                = 0
+      + id                       = (known after apply)
+      + protocol                 = "-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 0
+      + type                     = "egress"
+    }
+
+  # module.security.aws_security_group_rule.alb_http will be created
+  + resource "aws_security_group_rule" "alb_http" {
+      + cidr_blocks              = [
+          + "0.0.0.0/0",
+        ]
+      + from_port                = 80
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 80
+      + type                     = "ingress"
+    }
+
+  # module.security.aws_security_group_rule.alb_https will be created
+  + resource "aws_security_group_rule" "alb_https" {
+      + cidr_blocks              = [
+          + "0.0.0.0/0",
+        ]
+      + from_port                = 443
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 443
+      + type                     = "ingress"
+    }
+
+  # module.security.aws_security_group_rule.ec2_web will be created
+  + resource "aws_security_group_rule" "ec2_web" {
+      + from_port                = 8080
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 8080
+      + type                     = "ingress"
+    }
+
+  # module.security.aws_security_group_rule.rds_egress will be created
+  + resource "aws_security_group_rule" "rds_egress" {
+      + cidr_blocks              = [
+          + "0.0.0.0/0",
+        ]
+      + from_port                = 0
+      + id                       = (known after apply)
+      + protocol                 = "-1"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 0
+      + type                     = "egress"
+    }
+
+  # module.security.aws_security_group_rule.rds_mysql will be created
+  + resource "aws_security_group_rule" "rds_mysql" {
+      + from_port                = 3306
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 3306
+      + type                     = "ingress"
+    }
+
+  # module.security.aws_vpc_security_group_egress_rule.all will be created
+  + resource "aws_vpc_security_group_egress_rule" "all" {
+      + arn                    = (known after apply)
+      + cidr_ipv4              = "0.0.0.0/0"
+      + description            = "Allow all outbound traffic"
+      + id                     = (known after apply)
+      + ip_protocol            = "-1"
+      + security_group_id      = (known after apply)
+      + security_group_rule_id = (known after apply)
+      + tags_all               = {}
+    }
+
+  # module.security.aws_vpc_security_group_ingress_rule.ssh will be created
+  + resource "aws_vpc_security_group_ingress_rule" "ssh" {
+      + arn                    = (known after apply)
+      + cidr_ipv4              = "150.9.190.229/32"
+      + description            = "SSH from my IP"
+      + from_port              = 22
+      + id                     = (known after apply)
+      + ip_protocol            = "tcp"
+      + security_group_id      = (known after apply)
+      + security_group_rule_id = (known after apply)
+      + tags_all               = {}
+      + to_port                = 22
+    }
+
+  # module.subnet.aws_route.public_internet_access will be created
+  + resource "aws_route" "public_internet_access" {
+      + destination_cidr_block = "0.0.0.0/0"
+      + gateway_id             = (known after apply)
+      + id                     = (known after apply)
+      + instance_id            = (known after apply)
+      + instance_owner_id      = (known after apply)
+      + network_interface_id   = (known after apply)
+      + origin                 = (known after apply)
+      + route_table_id         = (known after apply)
+      + state                  = (known after apply)
+    }
+
+  # module.subnet.aws_route_table.private will be created
+  + resource "aws_route_table" "private" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + route            = (known after apply)
+      + tags             = {
+          + "Name" = "dev-rtb-private"
+        }
+      + tags_all         = {
+          + "Name" = "dev-rtb-private"
+        }
+      + vpc_id           = (known after apply)
+    }
+
+  # module.subnet.aws_route_table.public will be created
+  + resource "aws_route_table" "public" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + route            = (known after apply)
+      + tags             = {
+          + "Name" = "dev-rtb-public"
+        }
+      + tags_all         = {
+          + "Name" = "dev-rtb-public"
+        }
+      + vpc_id           = (known after apply)
+    }
+
+  # module.subnet.aws_route_table_association.private_1a will be created
+  + resource "aws_route_table_association" "private_1a" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.subnet.aws_route_table_association.private_1c will be created
+  + resource "aws_route_table_association" "private_1c" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.subnet.aws_route_table_association.public_1a will be created
+  + resource "aws_route_table_association" "public_1a" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.subnet.aws_route_table_association.public_1c will be created
+  + resource "aws_route_table_association" "public_1c" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.subnet.aws_subnet.private_1a will be created
+  + resource "aws_subnet" "private_1a" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "ap-northeast-1a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.3.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Name" = "dev-private-subnet-1a"
+        }
+      + tags_all                                       = {
+          + "Name" = "dev-private-subnet-1a"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # module.subnet.aws_subnet.private_1c will be created
+  + resource "aws_subnet" "private_1c" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "ap-northeast-1c"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.4.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Name" = "dev-private-subnet-1c"
+        }
+      + tags_all                                       = {
+          + "Name" = "dev-private-subnet-1c"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # module.subnet.aws_subnet.public_1a will be created
+  + resource "aws_subnet" "public_1a" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "ap-northeast-1a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.1.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Name" = "dev-public-subnet-1a"
+        }
+      + tags_all                                       = {
+          + "Name" = "dev-public-subnet-1a"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # module.subnet.aws_subnet.public_1c will be created
+  + resource "aws_subnet" "public_1c" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "ap-northeast-1c"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.2.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Name" = "dev-public-subnet-1c"
+        }
+      + tags_all                                       = {
+          + "Name" = "dev-public-subnet-1c"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # module.waf.aws_cloudwatch_log_group.waf_log will be created
+  + resource "aws_cloudwatch_log_group" "waf_log" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "aws-waf-logs-dev"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 30
+      + skip_destroy      = false
+      + tags              = {
+          + "Name" = "dev-waf-log-group"
+        }
+      + tags_all          = {
+          + "Name" = "dev-waf-log-group"
+        }
+    }
+
+  # module.waf.aws_wafv2_ip_set.allowed_ips will be created
+  + resource "aws_wafv2_ip_set" "allowed_ips" {
+      + addresses          = [
+          + "150.9.190.229/32",
+        ]
+      + arn                = (known after apply)
+      + description        = "IP set containing allowed IP addresses"
+      + id                 = (known after apply)
+      + ip_address_version = "IPV4"
+      + lock_token         = (known after apply)
+      + name               = "dev-allowed-ips"
+      + name_prefix        = (known after apply)
+      + scope              = "REGIONAL"
+      + tags_all           = (known after apply)
+    }
+
+  # module.waf.aws_wafv2_web_acl.web_acl will be created
+  + resource "aws_wafv2_web_acl" "web_acl" {
+      + application_integration_url = (known after apply)
+      + arn                         = (known after apply)
+      + capacity                    = (known after apply)
+      + description                 = "Allow only my IP"
+      + id                          = (known after apply)
+      + lock_token                  = (known after apply)
+      + name                        = "dev-web-acl"
+      + name_prefix                 = (known after apply)
+      + scope                       = "REGIONAL"
+      + tags_all                    = (known after apply)
+
+      + default_action {
+          + block {
+            }
+        }
+
+      + rule {
+          + name     = "allow-only-from-allowed-ips"
+          + priority = 1
+
+          + action {
+              + allow {
+                }
+            }
+
+          + statement {
+              + ip_set_reference_statement {
+                  + arn = (known after apply)
+                }
+            }
+
+          + visibility_config {
+              + cloudwatch_metrics_enabled = true
+              + metric_name                = "allow-only-from-allowed-ips-metric"
+              + sampled_requests_enabled   = true
+            }
+        }
+
+      + visibility_config {
+          + cloudwatch_metrics_enabled = true
+          + metric_name                = "dev-waf-ipset"
+          + sampled_requests_enabled   = true
+        }
+    }
+
+  # module.waf.aws_wafv2_web_acl_association.load_balancer_acl_association will be created
+  + resource "aws_wafv2_web_acl_association" "load_balancer_acl_association" {
+      + id           = (known after apply)
+      + resource_arn = (known after apply)
+      + web_acl_arn  = (known after apply)
+    }
+
+  # module.waf.aws_wafv2_web_acl_logging_configuration.wafv2 will be created
+  + resource "aws_wafv2_web_acl_logging_configuration" "wafv2" {
+      + id                      = (known after apply)
+      + log_destination_configs = (known after apply)
+      + resource_arn            = (known after apply)
+
+      + redacted_fields {
+          + method {}
+        }
+      + redacted_fields {
+          + query_string {}
+        }
+      + redacted_fields {
+          + single_header {
+              + name = "authorization"
+            }
+        }
+    }
+
+  # module.watch.aws_cloudwatch_log_group.messages will be created
+  + resource "aws_cloudwatch_log_group" "messages" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "dev-messages"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 7
+      + skip_destroy      = false
+      + tags_all          = (known after apply)
+    }
+
+  # module.watch.aws_cloudwatch_log_group.spring_boot will be created
+  + resource "aws_cloudwatch_log_group" "spring_boot" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "dev-spring-boot"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 7
+      + skip_destroy      = false
+      + tags_all          = (known after apply)
+    }
+
+  # module.watch.aws_cloudwatch_log_group.userdata will be created
+  + resource "aws_cloudwatch_log_group" "userdata" {
+      + arn               = (known after apply)
+      + id                = (known after apply)
+      + log_group_class   = (known after apply)
+      + name              = "dev-userdata"
+      + name_prefix       = (known after apply)
+      + retention_in_days = 7
+      + skip_destroy      = false
+      + tags_all          = (known after apply)
+    }
+
+  # module.watch.aws_cloudwatch_metric_alarm.waf_blocked_requests will be created
+  + resource "aws_cloudwatch_metric_alarm" "waf_blocked_requests" {
+      + actions_enabled                       = true
+      + alarm_actions                         = (known after apply)
+      + alarm_description                     = "許可IP以外からのアクセスを検知"
+      + alarm_name                            = "dev-waf-blocked-requests"
+      + arn                                   = (known after apply)
+      + comparison_operator                   = "GreaterThanOrEqualToThreshold"
+      + dimensions                            = {
+          + "Region" = "ap-northeast-1"
+          + "Rule"   = "dev-waf-ipset"
+          + "WebACL" = "dev-web-acl"
+        }
+      + evaluate_low_sample_count_percentiles = (known after apply)
+      + evaluation_periods                    = 1
+      + id                                    = (known after apply)
+      + metric_name                           = "BlockedRequests"
+      + namespace                             = "AWS/WAFV2"
+      + period                                = 60
+      + statistic                             = "Sum"
+      + tags_all                              = (known after apply)
+      + threshold                             = 0
+      + treat_missing_data                    = "notBreaching"
+    }
+
+  # module.watch.aws_sns_topic.alarm will be created
+  + resource "aws_sns_topic" "alarm" {
+      + arn                         = (known after apply)
+      + beginning_archive_time      = (known after apply)
+      + content_based_deduplication = false
+      + fifo_throughput_scope       = (known after apply)
+      + fifo_topic                  = false
+      + id                          = (known after apply)
+      + name                        = "dev-waf-alarm"
+      + name_prefix                 = (known after apply)
+      + owner                       = (known after apply)
+      + policy                      = (known after apply)
+      + signature_version           = (known after apply)
+      + tags_all                    = (known after apply)
+      + tracing_config              = (known after apply)
+    }
+
+  # module.watch.aws_sns_topic_subscription.email will be created
+  + resource "aws_sns_topic_subscription" "email" {
+      + arn                             = (known after apply)
+      + confirmation_timeout_in_minutes = 1
+      + confirmation_was_authenticated  = (known after apply)
+      + endpoint                        = "hiroe0125@gmail.com"
+      + endpoint_auto_confirms          = false
+      + filter_policy_scope             = (known after apply)
+      + id                              = (known after apply)
+      + owner_id                        = (known after apply)
+      + pending_confirmation            = (known after apply)
+      + protocol                        = "email"
+      + raw_message_delivery            = false
+      + topic_arn                       = (known after apply)
+    }
+
+Plan: 45 to add, 0 to change, 0 to destroy.
+module.watch.aws_cloudwatch_log_group.userdata: Creating...
+module.watch.aws_cloudwatch_log_group.messages: Creating...
+module.watch.aws_cloudwatch_log_group.spring_boot: Creating...
+module.main_vpc.aws_vpc.main_vpc: Creating...
+module.waf.aws_wafv2_ip_set.allowed_ips: Creating...
+module.waf.aws_cloudwatch_log_group.waf_log: Creating...
+module.rds.aws_iam_role.rds_monitoring: Creating...
+module.watch.aws_sns_topic.alarm: Creating...
+module.rds.aws_db_parameter_group.rds_parameter: Creating...
+module.watch.aws_cloudwatch_log_group.userdata: Creation complete after 0s [id=dev-userdata]
+module.watch.aws_cloudwatch_log_group.messages: Creation complete after 0s [id=dev-messages]
+module.waf.aws_cloudwatch_log_group.waf_log: Creation complete after 0s [id=aws-waf-logs-dev]
+module.watch.aws_cloudwatch_log_group.spring_boot: Creation complete after 0s [id=dev-spring-boot]
+module.waf.aws_wafv2_ip_set.allowed_ips: Creation complete after 0s [id=66624bd0-cc9d-4772-966e-8b3ab79cdef6]
+module.watch.aws_sns_topic.alarm: Creation complete after 0s [id=arn:aws:sns:ap-northeast-1:091749044219:dev-waf-alarm]
+module.watch.aws_sns_topic_subscription.email: Creating...
+module.watch.aws_sns_topic_subscription.email: Creation complete after 0s [id=arn:aws:sns:ap-northeast-1:091749044219:dev-waf-alarm:c1f4b6bb-6610-4044-ad99-283d0e6e638a]
+module.rds.aws_iam_role.rds_monitoring: Creation complete after 2s [id=dev-rds-monitoring-role]
+module.rds.aws_iam_role_policy_attachment.rds_monitoring: Creating...
+module.waf.aws_wafv2_web_acl.web_acl: Creating...
+module.rds.aws_iam_role_policy_attachment.rds_monitoring: Creation complete after 0s [id=dev-rds-monitoring-role-20250601112414910100000001]
+module.waf.aws_wafv2_web_acl.web_acl: Creation complete after 0s [id=1fcdef58-1f73-4e1e-88d8-898ed3144f4c]
+module.watch.aws_cloudwatch_metric_alarm.waf_blocked_requests: Creating...
+module.waf.aws_wafv2_web_acl_logging_configuration.wafv2: Creating...
+module.watch.aws_cloudwatch_metric_alarm.waf_blocked_requests: Creation complete after 1s [id=dev-waf-blocked-requests]
+module.waf.aws_wafv2_web_acl_logging_configuration.wafv2: Creation complete after 1s [id=arn:aws:wafv2:ap-northeast-1:091749044219:regional/webacl/dev-web-acl/1fcdef58-1f73-4e1e-88d8-898ed3144f4c]
+module.rds.aws_db_parameter_group.rds_parameter: Creation complete after 3s [id=dev-rds-parameter-group]
+module.main_vpc.aws_vpc.main_vpc: Still creating... [00m10s elapsed]
+module.main_vpc.aws_vpc.main_vpc: Creation complete after 12s [id=vpc-0e8d582ad15c2916a]
+module.main_vpc.aws_internet_gateway.igw: Creating...
+module.subnet.aws_route_table.private: Creating...
+module.security.aws_security_group.ec2_sg: Creating...
+module.subnet.aws_subnet.public_1c: Creating...
+module.subnet.aws_subnet.private_1a: Creating...
+module.subnet.aws_route_table.public: Creating...
+module.subnet.aws_subnet.public_1a: Creating...
+module.security.aws_security_group.alb_sg: Creating...
+module.security.aws_security_group.rds_sg: Creating...
+module.alb.aws_lb_target_group.alb_tg: Creating...
+module.main_vpc.aws_internet_gateway.igw: Creation complete after 0s [id=igw-07f09dad8d5ff1649]
+module.subnet.aws_subnet.private_1c: Creating...
+module.subnet.aws_route_table.private: Creation complete after 0s [id=rtb-0de4ed622e4b427ba]
+module.subnet.aws_route_table.public: Creation complete after 0s [id=rtb-02467c06b823413ff]
+module.subnet.aws_subnet.public_1c: Creation complete after 0s [id=subnet-005a47c939e47c81a]
+module.subnet.aws_route.public_internet_access: Creating...
+module.subnet.aws_route_table_association.public_1c: Creating...
+module.subnet.aws_subnet.public_1a: Creation complete after 0s [id=subnet-065dcb17a111822d7]
+module.subnet.aws_route_table_association.public_1a: Creating...
+module.alb.aws_lb_target_group.alb_tg: Creation complete after 0s [id=arn:aws:elasticloadbalancing:ap-northeast-1:091749044219:targetgroup/dev-tg/f5316b24f97c8e97]
+module.subnet.aws_route_table_association.public_1c: Creation complete after 1s [id=rtbassoc-0613dcc373f6dd89a]
+module.subnet.aws_route_table_association.public_1a: Creation complete after 1s [id=rtbassoc-0213bc0da2e0947ea]
+module.subnet.aws_subnet.private_1c: Creation complete after 1s [id=subnet-09a72958ff5023e47]
+module.subnet.aws_route_table_association.private_1c: Creating...
+module.subnet.aws_route.public_internet_access: Creation complete after 1s [id=r-rtb-02467c06b823413ff1080289494]
+module.security.aws_security_group.rds_sg: Creation complete after 1s [id=sg-07e3e5673b3069674]
+module.security.aws_security_group_rule.rds_egress: Creating...
+module.security.aws_security_group.ec2_sg: Creation complete after 1s [id=sg-052a72d8a8d7ae009]
+module.security.aws_security_group_rule.rds_mysql: Creating...
+module.security.aws_vpc_security_group_egress_rule.all: Creating...
+module.security.aws_vpc_security_group_ingress_rule.ssh: Creating...
+module.ec2.aws_instance.ec2: Creating...
+module.security.aws_security_group.alb_sg: Creation complete after 1s [id=sg-0307f2518bd0950fd]
+module.security.aws_security_group_rule.alb_http: Creating...
+module.security.aws_security_group_rule.alb_https: Creating...
+module.security.aws_security_group_rule.alb_egress: Creating...
+module.security.aws_vpc_security_group_ingress_rule.ssh: Creation complete after 0s [id=sgr-0a9470f768f641923]
+module.security.aws_security_group_rule.ec2_web: Creating...
+module.security.aws_vpc_security_group_egress_rule.all: Creation complete after 0s [id=sgr-05b822d83e73bb891]
+module.alb.aws_lb.alb: Creating...
+module.subnet.aws_route_table_association.private_1c: Creation complete after 0s [id=rtbassoc-0096839d552a27d04]
+module.security.aws_security_group_rule.rds_egress: Creation complete after 0s [id=sgrule-2038905033]
+module.security.aws_security_group_rule.alb_http: Creation complete after 0s [id=sgrule-2274816090]
+module.security.aws_security_group_rule.ec2_web: Creation complete after 1s [id=sgrule-561932071]
+module.security.aws_security_group_rule.rds_mysql: Creation complete after 1s [id=sgrule-1035410420]
+module.security.aws_security_group_rule.alb_https: Creation complete after 1s [id=sgrule-1540006566]
+module.subnet.aws_subnet.private_1a: Creation complete after 2s [id=subnet-0fb57444310ddd45e]
+module.subnet.aws_route_table_association.private_1a: Creating...
+module.rds.aws_db_subnet_group.rds_db: Creating...
+module.security.aws_security_group_rule.alb_egress: Creation complete after 1s [id=sgrule-4197561040]
+module.subnet.aws_route_table_association.private_1a: Creation complete after 0s [id=rtbassoc-0c58c8b6c8285974a]
+module.rds.aws_db_subnet_group.rds_db: Creation complete after 1s [id=dev-db-subnet-group]
+module.rds.aws_db_instance.rds: Creating...
+module.ec2.aws_instance.ec2: Still creating... [00m10s elapsed]
+module.alb.aws_lb.alb: Still creating... [00m10s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [00m10s elapsed]
+module.ec2.aws_instance.ec2: Creation complete after 13s [id=i-03eb4dabd2d652bc5]
+module.alb.aws_lb_target_group_attachment.ec2_attach: Creating...
+module.alb.aws_lb_target_group_attachment.ec2_attach: Creation complete after 0s [id=arn:aws:elasticloadbalancing:ap-northeast-1:091749044219:targetgroup/dev-tg/f5316b24f97c8e97-20250601112438935000000005]
+module.alb.aws_lb.alb: Still creating... [00m20s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [00m20s elapsed]
+module.alb.aws_lb.alb: Still creating... [00m30s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [00m30s elapsed]
+module.alb.aws_lb.alb: Still creating... [00m40s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [00m40s elapsed]
+module.alb.aws_lb.alb: Still creating... [00m50s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [00m50s elapsed]
+module.alb.aws_lb.alb: Still creating... [01m00s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [01m00s elapsed]
+module.alb.aws_lb.alb: Still creating... [01m10s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [01m10s elapsed]
+module.alb.aws_lb.alb: Still creating... [01m20s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [01m20s elapsed]
+module.alb.aws_lb.alb: Still creating... [01m30s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [01m30s elapsed]
+module.alb.aws_lb.alb: Still creating... [01m40s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [01m40s elapsed]
+module.alb.aws_lb.alb: Still creating... [01m50s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [01m50s elapsed]
+module.alb.aws_lb.alb: Still creating... [02m00s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [02m00s elapsed]
+module.alb.aws_lb.alb: Still creating... [02m10s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [02m10s elapsed]
+module.alb.aws_lb.alb: Still creating... [02m20s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [02m20s elapsed]
+module.alb.aws_lb.alb: Still creating... [02m30s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [02m30s elapsed]
+module.alb.aws_lb.alb: Still creating... [02m40s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [02m40s elapsed]
+module.alb.aws_lb.alb: Still creating... [02m50s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [02m50s elapsed]
+module.alb.aws_lb.alb: Still creating... [03m00s elapsed]
+module.alb.aws_lb.alb: Creation complete after 3m2s [id=arn:aws:elasticloadbalancing:ap-northeast-1:091749044219:loadbalancer/app/dev-alb/c44b8f6bf8e7827b]
+module.rds.aws_db_instance.rds: Still creating... [03m00s elapsed]
+module.alb.aws_lb_listener.alb_listener: Creating...
+module.waf.aws_wafv2_web_acl_association.load_balancer_acl_association: Creating...
+module.alb.aws_lb_listener.alb_listener: Creation complete after 1s [id=arn:aws:elasticloadbalancing:ap-northeast-1:091749044219:listener/app/dev-alb/c44b8f6bf8e7827b/2de19f6f4b8e3270]
+module.rds.aws_db_instance.rds: Still creating... [03m10s elapsed]
+module.waf.aws_wafv2_web_acl_association.load_balancer_acl_association: Still creating... [00m10s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [03m20s elapsed]
+module.waf.aws_wafv2_web_acl_association.load_balancer_acl_association: Still creating... [00m20s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [03m30s elapsed]
+module.waf.aws_wafv2_web_acl_association.load_balancer_acl_association: Still creating... [00m30s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [03m40s elapsed]
+module.waf.aws_wafv2_web_acl_association.load_balancer_acl_association: Still creating... [00m40s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [03m50s elapsed]
+module.waf.aws_wafv2_web_acl_association.load_balancer_acl_association: Still creating... [00m50s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [04m00s elapsed]
+module.waf.aws_wafv2_web_acl_association.load_balancer_acl_association: Still creating... [01m00s elapsed]
+module.waf.aws_wafv2_web_acl_association.load_balancer_acl_association: Creation complete after 1m6s [id=arn:aws:wafv2:ap-northeast-1:091749044219:regional/webacl/dev-web-acl/1fcdef58-1f73-4e1e-88d8-898ed3144f4c,arn:aws:elasticloadbalancing:ap-northeast-1:091749044219:loadbalancer/app/dev-alb/c44b8f6bf8e7827b]
+module.rds.aws_db_instance.rds: Still creating... [04m10s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [04m20s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [04m30s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [04m40s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [04m50s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [05m00s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [05m10s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [05m20s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [05m30s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [05m40s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [05m50s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [06m00s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [06m10s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [06m20s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [06m30s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [06m40s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [06m50s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [07m00s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [07m10s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [07m20s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [07m30s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [07m40s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [07m50s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [08m00s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [08m10s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [08m20s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [08m30s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [08m40s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [08m50s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [09m00s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [09m10s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [09m20s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [09m30s elapsed]
+module.rds.aws_db_instance.rds: Still creating... [09m40s elapsed]
+module.rds.aws_db_instance.rds: Creation complete after 9m41s [id=db-KVKTR7PSDOMETPXJUN2OKWOZXQ]
+
+Apply complete! Resources: 45 added, 0 changed, 0 destroyed.
